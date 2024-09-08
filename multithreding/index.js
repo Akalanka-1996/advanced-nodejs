@@ -1,23 +1,26 @@
-const experss = require('express')
+const experss = require("express");
+const { Worker } = require("worker_threads");
 
-const app = experss()
+const app = experss();
 
 const port = process.env.PORT || 3000;
 
 app.get("/non-blocking", (req, res) => {
-    res.status(200).send("This page is non-blocking");
-})
+  res.status(200).send("This page is non-blocking");
+});
 
 app.get("/blocking", async (req, res) => {
-    let counter = 0;
+  const worker = new Worker("./worker.js");
 
-    for (let i=0; i < 20_000_000_000; i++) {
-        counter ++;
-    }
+  worker.on("message", (data) => {
+    res.status(200).send(`result is ${data}`);
+  });
 
-    res.status(200).send(`result is ${counter}`);
-})
+  worker.on("error", (error) => {
+    res.status(404).send(`An error occured ${error}`);
+  });
+});
 
 app.listen(port, () => {
-    console.log(`App is running on port ${port}`);
-})
+  console.log(`App is running on port ${port}`);
+});
